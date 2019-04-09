@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="message">身長と体重を入力してください。</string>
+    <string name="weight">体重</string>
+    <string name="height">身長</string>
+    <string name="cm">cm</string>
+    <string name="kg">kg</string>
+    <string name="result">あなたのBMIは%d1$でした。</string>
+    <string name="button">BMIを計算する</string>
+    <string name="excuse">言い訳を書きたければ書いてください</string>
+    <string name="save">保存する</string>
+    <string name="delete">削除</string>
+    <string name="tab_input">入力</string>
+    <string name="tab_history">履歴</string>
+</resources>
