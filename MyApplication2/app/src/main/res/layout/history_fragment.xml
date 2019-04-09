@@ -10,5 +10,6 @@
             android:layout_height="wrap_content" android:id="@+id/textView" android:gravity="center"/>
     <android.support.v7.widget.RecyclerView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:id="@+id/recycler_view" tools:itemCount="9"/>
+            android:layout_height="wrap_content" android:id="@+id/recycler_view" tools:itemCount="9"
+            android:scrollbars="vertical"/>
 </LinearLayout>

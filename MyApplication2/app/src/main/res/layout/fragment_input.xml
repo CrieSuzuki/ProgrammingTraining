@@ -68,7 +68,8 @@
     <android.support.constraint.Guideline
             android:orientation="horizontal"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" app:layout_constraintGuide_begin="390dp" android:id="@+id/guideline"/>
+            android:layout_height="wrap_content" app:layout_constraintGuide_begin="390dp" android:id="@+id/guideline"
+            android:visibility="visible" android:background="@drawable/simple_frame"/>
     <TextView
             android:layout_width="293dp"
             android:layout_height="33dp"

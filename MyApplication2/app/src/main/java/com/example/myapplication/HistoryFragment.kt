@@ -61,18 +61,7 @@ class HistoryFragment : Fragment() {
             recordMap["コメント"] = c.getString(4)
             recordList.add(recordMap)
         }while(c.moveToNext())
-//
-//        // 二行目以降も同じ
-//        while (c.moveToNext()) {
-//            var dataMap: MutableMap<String, String?> = mutableMapOf()
-//            dataMap["日"] = c.getString(0)
-//            dataMap["身長"] = c.getString(1)
-//            dataMap["体重"] = c.getString(2)
-//            dataMap["BMI"] = c.getString(3)
-//            dataMap["コメント"] = c.getString(4)
-//            recordList.add(dataMap)
-//            c.moveToNext()
-//        }
+
         // データをViewに渡す
         recycler_view.adapter = ListAdapter(recordList)
 
