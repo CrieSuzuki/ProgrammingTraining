@@ -5,7 +5,10 @@ import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(){
+class MainActivity : AppCompatActivity() {
+    private var inputFragment = InputFragment.newInstance()
+    private var historyFragment = HistoryFragment.newInstance()
+
 
     // タブ切り替え時の処理
     // TODO: 都度都度インスタンス生成するのは良くない
@@ -13,13 +16,13 @@ class MainActivity : AppCompatActivity(){
         when (item.itemId) {
             R.id.navigation_input -> {
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.rootLayout, InputFragment.newInstance())
+                    .replace(R.id.frame, inputFragment)
                     .commit()
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_history -> {
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.rootLayout, HistoryFragment.newInstance())
+                    .replace(R.id.frame, historyFragment)
                     .commit()
                 return@OnNavigationItemSelectedListener true
             }
@@ -32,23 +35,15 @@ class MainActivity : AppCompatActivity(){
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
-        if (savedInstanceState == null){
+        if (savedInstanceState == null) {
             val transaction = supportFragmentManager.beginTransaction()
-            transaction.add(R.id.rootLayout,InputFragment.newInstance())
+            transaction.add(R.id.frame, inputFragment)
             transaction.commit()
         }
 
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
 
-
-
-
     }
-
-
-
-
 
 
 }

@@ -1,14 +1,20 @@
 package com.example.myapplication
 
+import android.content.Intent
+import android.content.SharedPreferences
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.preference.PreferenceManager
+import android.renderscript.ScriptGroup
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import kotlinx.android.synthetic.main.history_fragment.*
+import java.text.ParsePosition
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -16,7 +22,7 @@ import kotlinx.android.synthetic.main.history_fragment.*
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
 
-class HistoryFragment : Fragment() {
+class HistoryFragment : Fragment(){
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
@@ -49,21 +55,43 @@ class HistoryFragment : Fragment() {
         var recordList = arrayListOf<MutableMap<String, String?>>()
 
 
-        // カーソルの一行目に移動して一件目のレコードを取得
-        c.moveToFirst()
-        do{
-            // レコードの各カラムの値を保持するMap
-            var recordMap: MutableMap<String, String?> = mutableMapOf()
-            recordMap["日"] = c.getString(0)
-            recordMap["身長"] = c.getString(1)
-            recordMap["体重"] = c.getString(2)
-            recordMap["BMI"] = c.getString(3)
-            recordMap["コメント"] = c.getString(4)
-            recordList.add(recordMap)
-        }while(c.moveToNext())
+        // カーソルの一行目に移動して一件目のレコードを取得 以下繰り返し
+        if(c.count >0){
+            c.moveToFirst()
+            do {
+                var recordMap: MutableMap<String, String?> = mutableMapOf()
+                recordMap["日"] = c.getString(0)
+                recordMap["身長"] = c.getString(1)
+                recordMap["体重"] = c.getString(2)
+                recordMap["BMI"] = c.getString(3)
+                recordMap["コメント"] = c.getString(4)
+                recordList.add(recordMap)
+            } while (c.moveToNext())
+        }
 
         // データをViewに渡す
-        recycler_view.adapter = ListAdapter(recordList)
+        val adapter = ListAdapter(recordList)
+        recycler_view.adapter = adapter
+        adapter.setOnItemClickListener(object : ListAdapter.OnItemClickListener{
+            override fun onClick(view: View,data :MutableMap<String,String?>){
+                val fragment = InputFragment.newInstance()
+                var bundle = Bundle()
+
+                bundle.putString("日付",data["日"])
+                bundle.putString("身長", data["身長"])
+                bundle.putString("体重", data["体重"])
+                bundle.putString("BMI",data["BMI"])
+                bundle.putBoolean("削除",true)
+                bundle.putString("コメント",data["コメント"])
+
+                fragment.arguments = bundle
+
+                // 入力画面に遷移
+                fragmentManager!!.beginTransaction()
+                    .replace(R.id.frame, fragment)
+                    .commit()
+            }
+        })
 
     }
 
@@ -94,15 +122,6 @@ class HistoryFragment : Fragment() {
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment InputFragment.
-         */
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance() =
             HistoryFragment().apply {
@@ -114,4 +133,6 @@ class HistoryFragment : Fragment() {
     private fun getRecord(): Cursor {
         return UserDbAdapter(context!!).getDB((arrayOf("insert_date", "height", "weight", "bmi", "comment")))
     }
+
+
 }

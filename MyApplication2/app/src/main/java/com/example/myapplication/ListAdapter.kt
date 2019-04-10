@@ -5,36 +5,47 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import kotlinx.android.synthetic.main.history_fragment.view.*
 import kotlinx.android.synthetic.main.one_record.view.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-class ListAdapter(private val myDataSet: MutableList<MutableMap<String, String?>>) : RecyclerView.Adapter<ListAdapter.ViewHolder>() {
+class ListAdapter(private val myDataSet: MutableList<MutableMap<String, String?>>) :
+    RecyclerView.Adapter<ListAdapter.ViewHolder>() {
+    lateinit var listener: OnItemClickListener
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
+
+    interface OnItemClickListener {
+        fun onClick(view: View,data:MutableMap<String,String?>)
+    }
+
     override fun getItemCount(): Int {
         return myDataSet.size
     }
 
-    class ViewHolder(linear: LinearLayout) : RecyclerView.ViewHolder(linear)
-
     // 現在の月 最初は空
-    var current_month = ""
+    private var currentMonth = ""
 
-    override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ListAdapter.ViewHolder {
-        val linear = LayoutInflater.from(p0.context).inflate(R.layout.one_record, p0, false) as LinearLayout
-        return ViewHolder(linear)
+    override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ViewHolder {
+        val recycler = LayoutInflater.from(p0.context).inflate(R.layout.one_record, p0, false) as LinearLayout
+        return ViewHolder(recycler)
     }
 
-    override fun onBindViewHolder(holder: ListAdapter.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         var date: Date = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).parse(myDataSet[position]["日"])
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Tokyo"), Locale.JAPAN)
         calendar.time = date
         var month = calendar.get(Calendar.MONTH).plus(1).toString()
 
+        holder.itemView.setOnClickListener {
+            listener.onClick(it, myDataSet[position])
+        }
 
-        if (!(month.equals(current_month))) {
+        // 月が変わったらセクションを表示
+        if (!(month.equals(currentMonth))) {
             holder.itemView.month_label.visibility = View.VISIBLE
             holder.itemView.month_label.month.text = "$month 月"
-            current_month = month
+            currentMonth = month
         } else {
             holder.itemView.month_label.visibility = View.GONE
         }
@@ -47,7 +58,10 @@ class ListAdapter(private val myDataSet: MutableList<MutableMap<String, String?>
         } else {
             holder.itemView.linear_comment.visibility = View.GONE
         }
+    }
 
+    fun setOnItemClickListener(listener: OnItemClickListener) {
+        this.listener = listener
     }
 }
 

@@ -1,10 +1,10 @@
 package com.example.myapplication
 
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
 import android.preference.PreferenceManager
 import android.support.v4.app.Fragment
 import android.text.InputFilter
@@ -12,13 +12,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_input.*
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+private const val ARG_PARAM_DATE = "日付"
+private const val ARG_PARAM_HEIGHT = "身長"
+private const val ARG_PARAM_WEIGHT = "体重"
+private const val ARG_PARAM_BMI = "BMI"
+private const val ARG_PARAM_COMMENT = "コメント"
+
 
 /**
  * A simple [Fragment] subclass.
@@ -30,16 +34,21 @@ private const val ARG_PARAM2 = "param2"
  *
  */
 class InputFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private var paramDate: String? = null
+    private var paramHeight: String? = null
+    private var paramWeight: String? = null
+    private var paramBmi: String? = null
+    private var paramComment: String? = null
     private var listener: OnFragmentInteractionListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+            paramDate = it.getString(ARG_PARAM_DATE)
+            paramHeight = it.getString(ARG_PARAM_HEIGHT)
+            paramWeight = it.getString(ARG_PARAM_WEIGHT)
+            paramBmi = it.getString(ARG_PARAM_BMI)
+            paramComment = it.getString(ARG_PARAM_COMMENT)
         }
 
     }
@@ -57,13 +66,30 @@ class InputFragment : Fragment() {
      * fragment生成後の処理
      * */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
         var height: String
         var weight: String
         var bmi: String
         var comment: String
 
+        super.onViewCreated(view, savedInstanceState)
+
+        if (arguments?.getBoolean("削除") == true) {
+            delete_button.visibility = View.VISIBLE
+            input_excuse.visibility = View.VISIBLE
+            save_button.visibility = View.VISIBLE
+
+            // 削除対象データを入力欄に表示
+            input_height.setText(paramHeight,TextView.BufferType.NORMAL)
+            input_weight.setText(paramWeight,TextView.BufferType.NORMAL)
+            result_message.text = "あなたのBMIは $paramBmi でした。"
+            input_excuse.setText(paramComment)
+
+            // 削除ボタンのリスナー設定
+
+            delete_button.setOnClickListener {
+                deleteData(arrayOf(paramDate!!))
+            }
+        }
 
         // 入力欄に対する設定
         configureEditText(input_height)
@@ -98,12 +124,6 @@ class InputFragment : Fragment() {
                     comment = input_excuse.text.toString()
                     saveData(height, weight, bmi, comment)
                 }
-
-                //削除ボタンのリスナー設定
-                //TODO:履歴画面作成後に適切な場所に移動
-//                delete_button.setOnClickListener {
-//                    deleteData()
-//                }
             } else {
                 makeAlert("身長、体重を入力してください")
             }
@@ -147,15 +167,6 @@ class InputFragment : Fragment() {
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment InputFragment.
-         */
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance() =
             InputFragment().apply {
@@ -169,8 +180,6 @@ class InputFragment : Fragment() {
      * BMI計算処理
      * */
     private fun calculateLogic(height: String, weight: String): String {
-
-
         // BMI計算して返却
         val heightMeter = height.toDouble() * 0.01
         val result = weight.toDouble() / (heightMeter * heightMeter)
@@ -181,26 +190,50 @@ class InputFragment : Fragment() {
     /**
      * 保存ボタン押下時の処理内容
      * */
-    private fun saveData(
-        height: String,
-        weight: String,
-        bmi: String,
-        comment: String
-    ) {
+    private fun saveData(height: String, weight: String, bmi: String, comment: String) {
+        // 連打出来ないように
+        save_button.isEnabled = false
+        // 計算結果をDB登録
         val userDb = UserDbAdapter(this.context!!)
         userDb.add(height, weight, bmi, comment)
+
+        val toast = Toast.makeText(context, "保存しました", Toast.LENGTH_SHORT)
+        toast.show()
+
+        Handler().postDelayed({
+            // 履歴画面に遷移
+            fragmentManager!!.beginTransaction()
+                .replace(R.id.frame, HistoryFragment.newInstance())
+                .commit()
+            save_button.isEnabled = true
+        }, 1000L)
     }
 
     /**
      * 削除ボタン押下時の処理内容
      * */
-    private fun deleteData() {
-        // 今は入力、出力値をクリアするだけ
-        // TODO:履歴画面から選択したレコードを削除する処理に変更
+    private fun deleteData(key: Array<String>) {
+        delete_button.isEnabled = false
+        // 履歴画面から選択したレコードを削除する
+        val userDb = UserDbAdapter(this.context!!)
+        userDb.delete(key)
+
         input_height.text.clear()
         input_weight.text.clear()
-        result_message.text = ""
         input_excuse.text.clear()
+        result_message.text = ""
+
+        val toast = Toast.makeText(context, "削除しました", Toast.LENGTH_SHORT)
+        toast.show()
+
+        Handler().postDelayed({
+            // 履歴画面に遷移
+            fragmentManager!!.beginTransaction()
+                .replace(R.id.frame, HistoryFragment.newInstance())
+                .commit()
+            delete_button.isEnabled = true
+        }, 1000L)
+
     }
 
     /**
@@ -219,14 +252,14 @@ class InputFragment : Fragment() {
             setTitle("ERROR")
             setMessage(alertMessage)
             setPositiveButton(
-                "OK",
-                DialogInterface.OnClickListener { _, _ ->
-                    Toast.makeText(
-                        context,
-                        "OK",
-                        Toast.LENGTH_LONG
-                    )
-                })
+                "OK"
+            ) { _, _ ->
+                Toast.makeText(
+                    context,
+                    "OK",
+                    Toast.LENGTH_LONG
+                )
+            }
             show()
         }
     }
@@ -235,7 +268,7 @@ class InputFragment : Fragment() {
      * 身長、体重欄に対する設定
      * */
     private fun configureEditText(editText: EditText) {
-        val filter = InputFilter{source,start,end,dest,dstart,dend ->
+        val filter = InputFilter { source, start, end, dest, dstart, dend ->
             // TODO 正規表現見直し
             if (source.toString().matches("(^([0-9]{0,3})?(\\.[0-9]?)?$)".toRegex())) source
             else ""
