@@ -101,6 +101,7 @@ class InputFragment : Fragment() {
             height = input_height.text.toString()
             weight = input_weight.text.toString()
 
+
             // 入力チェック
             if (isCorrectInput(height, weight)) {
                 bmi = calculateLogic(height, weight)
@@ -192,7 +193,7 @@ class InputFragment : Fragment() {
      * */
     private fun saveData(height: String, weight: String, bmi: String, comment: String) {
         // 連打出来ないように
-        save_button.isEnabled = false
+        controlUserAction(false)
         // 計算結果をDB登録
         val userDb = UserDbAdapter(this.context!!)
         userDb.add(height, weight, bmi, comment)
@@ -205,7 +206,7 @@ class InputFragment : Fragment() {
             fragmentManager!!.beginTransaction()
                 .replace(R.id.frame, HistoryFragment.newInstance())
                 .commit()
-            save_button.isEnabled = true
+            controlUserAction(true)
         }, 1000L)
     }
 
@@ -213,7 +214,7 @@ class InputFragment : Fragment() {
      * 削除ボタン押下時の処理内容
      * */
     private fun deleteData(key: Array<String>) {
-        delete_button.isEnabled = false
+        controlUserAction(false)
         // 履歴画面から選択したレコードを削除する
         val userDb = UserDbAdapter(this.context!!)
         userDb.delete(key)
@@ -231,7 +232,7 @@ class InputFragment : Fragment() {
             fragmentManager!!.beginTransaction()
                 .replace(R.id.frame, HistoryFragment.newInstance())
                 .commit()
-            delete_button.isEnabled = true
+            controlUserAction(true)
         }, 1000L)
 
     }
@@ -273,7 +274,20 @@ class InputFragment : Fragment() {
             if (source.toString().matches("(^([0-9]{0,3})?(\\.[0-9]?)?$)".toRegex())) source
             else ""
         }
-        editText.setFilters(arrayOf(filter))
+        editText.filters = arrayOf(filter)
 
     }
+
+    /**
+    * 保存・削除ボタン押下時に他の入力欄を制御する
+    */
+    private fun controlUserAction(isEnable:Boolean){
+        save_button.isEnabled = isEnable
+        delete_button.isEnabled = isEnable
+        input_height.isEnabled = isEnable
+        input_weight.isEnabled = isEnable
+        calculate_button.isEnabled = isEnable
+        input_excuse.isEnabled = isEnable
+    }
+
 }

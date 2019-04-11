@@ -42,9 +42,10 @@ class UserDbAdapter(mContext: Context) {
      * データ検索
      * */
     fun getDB(columns: Array<String>): Cursor {
-        return db.query("BMI_DATA", columns, null, null, null, null, "_id ASC")
+        return db.query("BMI_DATA", columns, null, null, null, null, null)
 
     }
+
 
     /**
      * 現在日付取得

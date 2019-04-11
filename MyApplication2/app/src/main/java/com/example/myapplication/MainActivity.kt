@@ -10,6 +10,7 @@ class MainActivity : AppCompatActivity() {
     private var historyFragment = HistoryFragment.newInstance()
 
 
+
     // タブ切り替え時の処理
     // TODO: 都度都度インスタンス生成するのは良くない
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->

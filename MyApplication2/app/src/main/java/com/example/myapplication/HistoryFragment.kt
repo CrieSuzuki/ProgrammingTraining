@@ -1,12 +1,9 @@
 package com.example.myapplication
 
-import android.content.Intent
-import android.content.SharedPreferences
+import android.app.AlertDialog
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.renderscript.ScriptGroup
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
@@ -14,7 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.history_fragment.*
-import java.text.ParsePosition
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -22,7 +18,7 @@ import java.text.ParsePosition
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
 
-class HistoryFragment : Fragment(){
+class HistoryFragment : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
@@ -48,16 +44,16 @@ class HistoryFragment : Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         recycler_view.layoutManager = LinearLayoutManager(this.context)
-
-        // DBからデータ取得
-        val c: Cursor = getRecord()
         // レコードを入れるList
         var recordList = arrayListOf<MutableMap<String, String?>>()
 
+        val fragment = InputFragment.newInstance()
 
-        // カーソルの一行目に移動して一件目のレコードを取得 以下繰り返し
-        if(c.count >0){
-            c.moveToFirst()
+        // DBからデータ取得
+        val c: Cursor = getRecord()
+        if (c.moveToFirst()) {
+            // カーソルの一行目に移動して一件目のレコードを取得 以下繰り返し
+
             do {
                 var recordMap: MutableMap<String, String?> = mutableMapOf()
                 recordMap["日"] = c.getString(0)
@@ -67,32 +63,49 @@ class HistoryFragment : Fragment(){
                 recordMap["コメント"] = c.getString(4)
                 recordList.add(recordMap)
             } while (c.moveToNext())
-        }
 
-        // データをViewに渡す
-        val adapter = ListAdapter(recordList)
-        recycler_view.adapter = adapter
-        adapter.setOnItemClickListener(object : ListAdapter.OnItemClickListener{
-            override fun onClick(view: View,data :MutableMap<String,String?>){
-                val fragment = InputFragment.newInstance()
-                var bundle = Bundle()
+            // データをViewに渡す
+            val adapter = ListAdapter(recordList)
+            recycler_view.adapter = adapter
+            adapter.setOnItemClickListener(object : ListAdapter.OnItemClickListener {
+                override fun onClick(view: View, data: MutableMap<String, String?>) {
 
-                bundle.putString("日付",data["日"])
-                bundle.putString("身長", data["身長"])
-                bundle.putString("体重", data["体重"])
-                bundle.putString("BMI",data["BMI"])
-                bundle.putBoolean("削除",true)
-                bundle.putString("コメント",data["コメント"])
+                    var bundle = Bundle()
 
-                fragment.arguments = bundle
+                    bundle.putString("日付", data["日"])
+                    bundle.putString("身長", data["身長"])
+                    bundle.putString("体重", data["体重"])
+                    bundle.putString("BMI", data["BMI"])
+                    bundle.putBoolean("削除", true)
+                    bundle.putString("コメント", data["コメント"])
 
+                    fragment.arguments = bundle
+
+                    // 入力画面に遷移
+                    fragmentManager!!.beginTransaction()
+                        .replace(R.id.frame, fragment)
+                        .commit()
+                }
+
+            })
+        } else {
+            AlertDialog.Builder(context).apply {
+                setTitle("ERROR")
+                setMessage("データが登録されていません")
+                setPositiveButton("OK") { _, _ ->
+                    Toast.makeText(
+                        context,
+                        "OK",
+                        Toast.LENGTH_LONG
+                    )
+                }
+                show()
                 // 入力画面に遷移
                 fragmentManager!!.beginTransaction()
                     .replace(R.id.frame, fragment)
                     .commit()
             }
-        })
-
+        }
     }
 
     // TODO: Rename method, update argument and hook method into UI event
