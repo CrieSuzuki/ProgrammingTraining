@@ -23,6 +23,7 @@ class HistoryFragment : Fragment() {
     private var param1: String? = null
     private var param2: String? = null
     private var listener: InputFragment.OnFragmentInteractionListener? = null
+    private val util = Util()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,71 +45,38 @@ class HistoryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         recycler_view.layoutManager = LinearLayoutManager(this.context)
-        // レコードを入れるList
-        var recordList = arrayListOf<MutableMap<String, String?>>()
 
         val fragment = InputFragment.newInstance()
+        val recordList = getRecord()
 
-        // DBからデータ取得
-        val c: Cursor = getRecord()
-        if (c.moveToFirst()) {
-            // カーソルの一行目に移動して一件目のレコードを取得 以下繰り返し
-
-            do {
-                var recordMap: MutableMap<String, String?> = mutableMapOf()
-                recordMap["日"] = c.getString(0)
-                recordMap["身長"] = c.getString(1)
-                recordMap["体重"] = c.getString(2)
-                recordMap["BMI"] = c.getString(3)
-                recordMap["コメント"] = c.getString(4)
-                recordList.add(recordMap)
-            } while (c.moveToNext())
-
+        if (recordList.size >0){
             // データをViewに渡す
             val adapter = ListAdapter(recordList)
             recycler_view.adapter = adapter
             adapter.setOnItemClickListener(object : ListAdapter.OnItemClickListener {
                 override fun onClick(view: View, data: MutableMap<String, String?>) {
 
-                    var bundle = Bundle()
-
-                    bundle.putString("日付", data["日"])
-                    bundle.putString("身長", data["身長"])
-                    bundle.putString("体重", data["体重"])
-                    bundle.putString("BMI", data["BMI"])
-                    bundle.putBoolean("削除", true)
-                    bundle.putString("コメント", data["コメント"])
-
-                    fragment.arguments = bundle
-
+                    fragment.arguments = Bundle().also {
+                        it.putString("日付", data["日"])
+                        it.putString("身長", data["身長"])
+                        it.putString("体重", data["体重"])
+                        it.putString("BMI", data["BMI"])
+                        it.putBoolean("削除", true)
+                        it.putString("コメント", data["コメント"])
+                    }
                     // 入力画面に遷移
-                    fragmentManager!!.beginTransaction()
-                        .replace(R.id.frame, fragment)
-                        .commit()
+                    fragmentManager!!.beginTransaction().replace(R.id.frame, fragment).commit()
                 }
-
             })
-        } else {
-            AlertDialog.Builder(context).apply {
-                setTitle("ERROR")
-                setMessage("データが登録されていません")
-                setPositiveButton("OK") { _, _ ->
-                    Toast.makeText(
-                        context,
-                        "OK",
-                        Toast.LENGTH_LONG
-                    )
-                }
-                show()
-                // 入力画面に遷移
-                fragmentManager!!.beginTransaction()
-                    .replace(R.id.frame, fragment)
-                    .commit()
-            }
+        }else{
+            util.makeAlert(context!!,"データが登録されていません。")
+            // 入力画面に遷移
+            fragmentManager!!.beginTransaction()
+                .replace(R.id.frame, fragment)
+                .commit()
         }
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
     fun onButtonPressed(uri: Uri) {
         listener?.onFragmentInteraction(uri)
     }
@@ -143,9 +111,22 @@ class HistoryFragment : Fragment() {
             }
     }
 
-    private fun getRecord(): Cursor {
-        return UserDbAdapter(context!!).getDB((arrayOf("insert_date", "height", "weight", "bmi", "comment")))
+    private fun getRecord(): ArrayList<MutableMap<String, String?>> {
+        var c :Cursor = UserDbAdapter(context!!).getDB((arrayOf("insert_date", "height", "weight", "bmi", "comment")))
+        var recordList = arrayListOf<MutableMap<String, String?>>()
+        if (c.moveToFirst()) {
+            // カーソルの一行目に移動して一件目のレコードを取得 以下繰り返し
+            do {
+                var recordMap: MutableMap<String, String?> = mutableMapOf()
+                recordMap["日"] = c.getString(0)
+                recordMap["身長"] = c.getString(1)
+                recordMap["体重"] = c.getString(2)
+                recordMap["BMI"] = c.getString(3)
+                recordMap["コメント"] = c.getString(4)
+                recordList.add(recordMap)
+            } while (c.moveToNext())
+        }
+        return recordList
     }
-
 
 }

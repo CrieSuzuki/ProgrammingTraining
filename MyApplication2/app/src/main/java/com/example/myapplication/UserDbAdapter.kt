@@ -13,6 +13,7 @@ class UserDbAdapter(mContext: Context) {
 
     private val userDb = UserDbHelper(mContext)
     private val db = userDb.writableDatabase
+    private val util = Util()
 
 
     /**
@@ -24,7 +25,7 @@ class UserDbAdapter(mContext: Context) {
         values.put("weight", weight)
         values.put("bmi", bmi)
         values.put("comment", comment)
-        values.put("insert_date", getDate())
+        values.put("insert_date", util.getDate())
 
         db.replaceOrThrow("BMI_DATA", null, values)
 
@@ -47,13 +48,6 @@ class UserDbAdapter(mContext: Context) {
     }
 
 
-    /**
-     * 現在日付取得
-     * */
-    private fun getDate(): String {
-        var date = Date()
-        val format = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
-        return format.format(date)
-    }
+
 
 }

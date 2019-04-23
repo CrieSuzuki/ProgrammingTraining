@@ -1,6 +1,6 @@
 package com.example.myapplication
 
-import android.app.AlertDialog
+import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
@@ -14,7 +14,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_input.*
 
 private const val ARG_PARAM_DATE = "日付"
@@ -40,6 +39,7 @@ class InputFragment : Fragment() {
     private var paramBmi: String? = null
     private var paramComment: String? = null
     private var listener: OnFragmentInteractionListener? = null
+    private val util = Util()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,27 +73,15 @@ class InputFragment : Fragment() {
 
         super.onViewCreated(view, savedInstanceState)
 
-        if (arguments?.getBoolean("削除") == true) {
-            delete_button.visibility = View.VISIBLE
-            input_excuse.visibility = View.VISIBLE
-            save_button.visibility = View.VISIBLE
-
-            // 削除対象データを入力欄に表示
-            input_height.setText(paramHeight,TextView.BufferType.NORMAL)
-            input_weight.setText(paramWeight,TextView.BufferType.NORMAL)
-            result_message.text = "あなたのBMIは $paramBmi でした。"
-            input_excuse.setText(paramComment)
-
-            // 削除ボタンのリスナー設定
-
-            delete_button.setOnClickListener {
-                deleteData(arrayOf(paramDate!!))
-            }
-        }
 
         // 入力欄に対する設定
         configureEditText(input_height)
         configureEditText(input_weight)
+
+        // 削除時の設定
+        if (arguments?.getBoolean("削除") == true) {
+            prepareForDelete()
+        }
 
         // 計算ボタンのリスナー設定
         calculate_button.setOnClickListener {
@@ -104,47 +92,48 @@ class InputFragment : Fragment() {
 
             // 入力チェック
             if (isCorrectInput(height, weight)) {
-                bmi = calculateLogic(height, weight)
+                bmi = util.calculateLogic(height, weight)
                 // 表示
                 result_message.text = "あなたのBMIは $bmi でした。"
-
-                //SharedPreferenceに登録
-                val dataStore: SharedPreferences =
-                    PreferenceManager.getDefaultSharedPreferences(context)
-                val editor = dataStore.edit()
-                editor.putString("身長", height)
-                editor.putString("体重", weight)
-                editor.apply()
-
+                // sharedPreferencesに登録
+                saveSharedPreferences(height,weight,bmi)
                 //コメント欄と保存ボタンを見えるようにする
                 input_excuse.visibility = View.VISIBLE
                 save_button.visibility = View.VISIBLE
-
                 //保存ボタンのリスナー設定
                 save_button.setOnClickListener {
                     comment = input_excuse.text.toString()
                     saveData(height, weight, bmi, comment)
                 }
             } else {
-                makeAlert("身長、体重を入力してください")
+                util.makeAlert(context!!,"身長、体重を入力してください")
             }
         }
     }
 
 
-    // TODO: Rename method, update argument and hook method into UI event
+    private fun saveSharedPreferences(h:String,w:String,bmi:String){
+        //SharedPreferenceに登録
+        val dataStore: SharedPreferences =
+            PreferenceManager.getDefaultSharedPreferences(context)
+        val editor = dataStore.edit()
+        editor.putString("身長", h)
+        editor.putString("体重", w)
+        editor.putString("BMI",bmi)
+        editor.apply()
+    }
     fun onButtonPressed(uri: Uri) {
         listener?.onFragmentInteraction(uri)
     }
 
-    /*override fun onAttach(context: Context) {
-        super.onAttach(context)
-        if (context is OnFragmentInteractionListener) {
-            listener = context
-        } else {
-            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
-        }
-    }*/
+//    override fun onAttach(context: Context) {
+//        super.onAttach(context)
+//        if (context is OnFragmentInteractionListener) {
+//            listener = context
+//        } else {
+//            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
+//        }
+//    }
 
     override fun onDetach() {
         super.onDetach()
@@ -163,7 +152,6 @@ class InputFragment : Fragment() {
      * for more information.
      */
     interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         fun onFragmentInteraction(uri: Uri)
     }
 
@@ -175,18 +163,6 @@ class InputFragment : Fragment() {
                 }
             }
     }
-
-
-    /**
-     * BMI計算処理
-     * */
-    private fun calculateLogic(height: String, weight: String): String {
-        // BMI計算して返却
-        val heightMeter = height.toDouble() * 0.01
-        val result = weight.toDouble() / (heightMeter * heightMeter)
-        return "%.1f".format(result)
-    }
-
 
     /**
      * 保存ボタン押下時の処理内容
@@ -241,28 +217,13 @@ class InputFragment : Fragment() {
      * 入力値をチェックする
      * */
     private fun isCorrectInput(a: String, b: String): Boolean {
-        return !(a.isEmpty() || b.isEmpty())
-    }
-
-
-    /**
-     * アラートダイアログを作って表示する
-     * */
-    private fun makeAlert(alertMessage: String) {
-        AlertDialog.Builder(context).apply {
-            setTitle("ERROR")
-            setMessage(alertMessage)
-            setPositiveButton(
-                "OK"
-            ) { _, _ ->
-                Toast.makeText(
-                    context,
-                    "OK",
-                    Toast.LENGTH_LONG
-                )
+        var isCorrect = false
+        if(!(a.isEmpty() || b.isEmpty())){
+            if(!(a == "0" || b == "0")){
+                isCorrect = true
             }
-            show()
         }
+        return isCorrect
     }
 
     /**
@@ -288,6 +249,24 @@ class InputFragment : Fragment() {
         input_weight.isEnabled = isEnable
         calculate_button.isEnabled = isEnable
         input_excuse.isEnabled = isEnable
+    }
+
+    private fun prepareForDelete(){
+        delete_button.visibility = View.VISIBLE
+        input_excuse.visibility = View.VISIBLE
+        save_button.visibility = View.VISIBLE
+
+        // 削除対象データを入力欄に表示
+        input_height.setText(paramHeight,TextView.BufferType.NORMAL)
+        input_weight.setText(paramWeight,TextView.BufferType.NORMAL)
+        result_message.text = "あなたのBMIは $paramBmi でした。"
+        input_excuse.setText(paramComment)
+
+        // 削除ボタンのリスナー設定
+
+        delete_button.setOnClickListener {
+            deleteData(arrayOf(paramDate!!))
+        }
     }
 
 }
